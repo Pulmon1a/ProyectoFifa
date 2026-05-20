@@ -12,12 +12,11 @@ INSERT INTO groups_table (id, matches_played) VALUES ('J', 0);
 INSERT INTO groups_table (id, matches_played) VALUES ('K', 0);
 INSERT INTO groups_table (id, matches_played) VALUES ('L', 0);
 
--- EQUIPOS (48 equipos, 4 por grupo, max 2 UEFA por grupo)
 -- GRUPO A
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('USA', 'Estados Unidos', 'CONCACAF', 'A');
-INSERT INTO teams (id, name, confederation, group_id) VALUES ('MEX', 'México', 'CONCACAF', 'A');
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('URU', 'Uruguay', 'CONMEBOL', 'A');
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('GER', 'Alemania', 'UEFA', 'A');
+INSERT INTO teams (id, name, confederation, group_id) VALUES ('VEN', 'Venezuela', 'CONMEBOL', 'A');
 
 -- GRUPO B
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('ARG', 'Argentina', 'CONMEBOL', 'B');
@@ -51,25 +50,25 @@ INSERT INTO teams (id, name, confederation, group_id) VALUES ('IRN', 'Irán', 'A
 
 -- GRUPO G
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('ITA', 'Italia', 'UEFA', 'G');
-INSERT INTO teams (id, name, confederation, group_id) VALUES ('MEX2', 'México 2', 'CONCACAF', 'G');
+INSERT INTO teams (id, name, confederation, group_id) VALUES ('MEX', 'México', 'CONCACAF', 'G');
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('PAR', 'Paraguay', 'CONMEBOL', 'G');
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('TUN', 'Túnez', 'CAF', 'G');
 
 -- GRUPO H
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('CRO', 'Croacia', 'UEFA', 'H');
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('SUI', 'Suiza', 'UEFA', 'H');
-INSERT INTO teams (id, name, confederation, group_id) VALUES ('VEN', 'Venezuela', 'CONMEBOL', 'H');
+INSERT INTO teams (id, name, confederation, group_id) VALUES ('BOL', 'Bolivia', 'CONMEBOL', 'H');
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('SAU', 'Arabia Saudita', 'AFC', 'H');
 
 -- GRUPO I
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('DEN', 'Dinamarca', 'UEFA', 'I');
-INSERT INTO teams (id, name, confederation, group_id) VALUES ('BOL', 'Bolivia', 'CONMEBOL', 'I');
+INSERT INTO teams (id, name, confederation, group_id) VALUES ('PER', 'Perú', 'CONMEBOL', 'I');
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('GHA', 'Ghana', 'CAF', 'I');
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('CAN', 'Canadá', 'CONCACAF', 'I');
 
 -- GRUPO J
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('AUT', 'Austria', 'UEFA', 'J');
-INSERT INTO teams (id, name, confederation, group_id) VALUES ('PER', 'Perú', 'CONMEBOL', 'J');
+INSERT INTO teams (id, name, confederation, group_id) VALUES ('ECU2', 'Ecuador 2', 'CONMEBOL', 'J');
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('CIV', 'Costa de Marfil', 'CAF', 'J');
 INSERT INTO teams (id, name, confederation, group_id) VALUES ('NZL', 'Nueva Zelanda', 'OFC', 'J');
 

@@ -1,0 +1,51 @@
+<div class="page-container">
+  <h1 class="page-title">Fase de Grupos — FIFA World Cup 2026</h1>
+
+  <div *ngIf="loading" class="loading">Cargando grupos...</div>
+  <div *ngIf="error" class="error-msg">{{ error }}</div>
+
+  <div *ngIf="!loading && !error" class="groups-grid">
+    <div *ngFor="let group of groupsData" class="group-card">
+      <h2 class="group-title">Grupo {{ group.id }}</h2>
+      <table class="standings-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Equipo</th>
+            <th>PJ</th>
+            <th>G</th>
+            <th>E</th>
+            <th>P</th>
+            <th>GF</th>
+            <th>GC</th>
+            <th>DG</th>
+            <th>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let team of group.standings; let i = index"
+              [class.qualified]="i < 2"
+              [class.third]="i === 2">
+            <td>{{ i + 1 }}</td>
+            <td class="team-name">{{ team.teamName }}</td>
+            <td>{{ team.played }}</td>
+            <td>{{ team.wins }}</td>
+            <td>{{ team.draws }}</td>
+            <td>{{ team.losses }}</td>
+            <td>{{ team.goalsFor }}</td>
+            <td>{{ team.goalsAgainst }}</td>
+            <td>{{ team.goalDifference }}</td>
+            <td class="points">{{ team.points }}</td>
+          </tr>
+          <tr *ngIf="group.standings.length === 0">
+            <td colspan="10" class="empty">Sin equipos registrados</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="group-legend">
+        <span class="legend-qualified">Clasificado</span>
+        <span class="legend-third">Mejor tercero</span>
+      </div>
+    </div>
+  </div>
+</div>

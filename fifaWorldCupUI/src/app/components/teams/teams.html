@@ -1,0 +1,70 @@
+<div class="page-container">
+  <h1 class="page-title">Gestión de Equipos</h1>
+
+  <div *ngIf="success" class="success-msg">{{ success }}</div>
+  <div *ngIf="error" class="error-msg">{{ error }}</div>
+
+  <button class="btn-primary" (click)="openCreate()" *ngIf="apiService.isAdmin()">
+    Agregar Equipo
+  </button>
+
+  <div *ngIf="showForm && apiService.isAdmin()" class="form-card">
+    <h3>{{ editMode ? 'Editar Equipo' : 'Nuevo Equipo' }}</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>ID del Equipo</label>
+        <input type="text" [(ngModel)]="form.id" [disabled]="editMode" placeholder="Ej: COL" />
+      </div>
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" [(ngModel)]="form.name" placeholder="Ej: Colombia" />
+      </div>
+      <div class="form-group">
+        <label>Confederación</label>
+        <select [(ngModel)]="form.confederation">
+          <option value="">Seleccionar...</option>
+          <option *ngFor="let c of confederations" [value]="c">{{ c }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Grupo</label>
+        <select [(ngModel)]="form.groupId">
+          <option value="">Seleccionar...</option>
+          <option *ngFor="let g of groupIds" [value]="g">Grupo {{ g }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" (click)="save()">{{ editMode ? 'Actualizar' : 'Guardar' }}</button>
+      <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">Cargando equipos...</div>
+  <table *ngIf="!loading" class="data-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Confederación</th>
+        <th>Grupo</th>
+        <th *ngIf="apiService.isAdmin()">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let team of teams">
+        <td>{{ team.id }}</td>
+        <td>{{ team.name }}</td>
+        <td>{{ team.confederation }}</td>
+        <td>Grupo {{ team.groupId }}</td>
+        <td *ngIf="apiService.isAdmin()">
+          <button class="btn-edit" (click)="openEdit(team)">Editar</button>
+          <button class="btn-delete" (click)="delete(team.id)">Eliminar</button>
+        </td>
+      </tr>
+      <tr *ngIf="teams.length === 0">
+        <td colspan="5" class="empty">No hay equipos registrados</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

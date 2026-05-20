@@ -1,0 +1,67 @@
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 20px;
+}
+
+.group-card {
+  background: #16213e;
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid #1e2a4a;
+  transition: border-color 0.2s;
+}
+
+.group-card:hover { border-color: #c9a227; }
+
+.group-title {
+  font-size: 0.95rem;
+  color: #c9a227;
+  margin-bottom: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border-bottom: 1px solid #1e2a4a;
+  padding-bottom: 10px;
+}
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.standings-table th {
+  background: #0a0a1a;
+  color: #c9a227;
+  padding: 7px 8px;
+  text-align: center;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+
+.standings-table td {
+  padding: 7px 8px;
+  text-align: center;
+  border-bottom: 1px solid #1a2035;
+  color: #ccc;
+}
+
+.standings-table .team-name { text-align: left; font-weight: 500; color: #e0e0e0; }
+.standings-table .points { font-weight: 700; color: #c9a227; }
+.standings-table tr.qualified { background: rgba(39,174,96,0.08); }
+.standings-table tr.third { background: rgba(52,152,219,0.08); }
+
+.group-legend {
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.legend-qualified { color: #27ae60; }
+.legend-third { color: #3498db; }

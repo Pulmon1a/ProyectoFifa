@@ -1,0 +1,96 @@
+<div class="page-container">
+  <h1 class="page-title">Partidos</h1>
+
+  <div *ngIf="success" class="success-msg">{{ success }}</div>
+  <div *ngIf="error" class="error-msg">{{ error }}</div>
+
+  <div class="filter-bar">
+    <label>Grupo:</label>
+    <select [(ngModel)]="selectedGroupId" (change)="onGroupChange()">
+      <option *ngFor="let g of groupIds" [value]="g">Grupo {{ g }}</option>
+    </select>
+    <button class="btn-primary" *ngIf="apiService.isAdmin() && matches.length === 0" (click)="generateMatches()">
+      Generar Partidos
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading">Cargando partidos...</div>
+
+  <div *ngIf="!loading" class="matches-list">
+    <div *ngIf="matches.length === 0" class="empty-state">
+      No hay partidos registrados para el Grupo {{ selectedGroupId }}
+      <span *ngIf="apiService.isAdmin()"> — usa el botón Generar Partidos</span>
+    </div>
+
+    <div *ngFor="let match of matches" class="match-card" [class.played]="match.played">
+      <div class="match-status">
+        <span *ngIf="match.played" class="badge-played">Jugado</span>
+        <span *ngIf="!match.played" class="badge-pending">Pendiente</span>
+      </div>
+
+      <div class="match-teams">
+        <div class="team home">{{ getTeamName(match.homeTeamId) }}</div>
+        <div class="score" *ngIf="match.played">{{ match.homeGoals }} - {{ match.awayGoals }}</div>
+        <div class="score" *ngIf="!match.played">vs</div>
+        <div class="team away">{{ getTeamName(match.awayTeamId) }}</div>
+      </div>
+
+      <div class="match-cards" *ngIf="match.played">
+        Amarillas: {{ match.homeYellowCards }} - {{ match.awayYellowCards }}
+        &nbsp;|&nbsp;
+        Rojas: {{ match.homeRedCards }} - {{ match.awayRedCards }}
+      </div>
+
+      <div class="match-actions" *ngIf="apiService.isAdmin() && !match.played">
+  <button class="btn-edit" (click)="openEditMatch(match)">Registrar Resultado</button>
+</div>
+
+      <div *ngIf="editingMatch && editingMatch.id === match.id" class="inline-form">
+        <div class="inline-form-grid">
+          <div class="inline-team">
+            <span class="inline-team-name">{{ getTeamName(match.homeTeamId) }}</span>
+            <div class="inline-inputs">
+              <div class="form-group">
+                <label>Goles</label>
+                <input type="number" [(ngModel)]="matchForm.homeGoals" min="0" />
+              </div>
+              <div class="form-group">
+                <label>Amarillas</label>
+                <input type="number" [(ngModel)]="matchForm.homeYellowCards" min="0" />
+              </div>
+              <div class="form-group">
+                <label>Rojas</label>
+                <input type="number" [(ngModel)]="matchForm.homeRedCards" min="0" />
+              </div>
+            </div>
+          </div>
+
+          <div class="inline-vs">VS</div>
+
+          <div class="inline-team">
+            <span class="inline-team-name">{{ getTeamName(match.awayTeamId) }}</span>
+            <div class="inline-inputs">
+              <div class="form-group">
+                <label>Goles</label>
+                <input type="number" [(ngModel)]="matchForm.awayGoals" min="0" />
+              </div>
+              <div class="form-group">
+                <label>Amarillas</label>
+                <input type="number" [(ngModel)]="matchForm.awayYellowCards" min="0" />
+              </div>
+              <div class="form-group">
+                <label>Rojas</label>
+                <input type="number" [(ngModel)]="matchForm.awayRedCards" min="0" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" (click)="saveMatch()">Guardar</button>
+          <button class="btn-secondary" (click)="cancelEdit()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

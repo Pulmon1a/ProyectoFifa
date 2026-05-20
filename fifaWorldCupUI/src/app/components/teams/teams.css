@@ -1,0 +1,27 @@
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.data-table th {
+  background: #0a0a1a;
+  color: #c9a227;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  border-bottom: 2px solid #c9a227;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #1a2035;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.data-table tr:hover { background: #1a2a4a; }
+.data-table tr:hover td { color: #fff; }

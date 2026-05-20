@@ -12,8 +12,8 @@ public class AppMain extends SpringBootServletInitializer {
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
 		return application.sources(AppMain.class);
 	} 
-
+ 
 	public static void main(String[] args) {
 		SpringApplication.run(AppMain.class, args);
 	}
-}
+} 

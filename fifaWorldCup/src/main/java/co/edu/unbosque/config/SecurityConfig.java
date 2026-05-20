@@ -13,45 +13,66 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-	@Bean
-	public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-		UserDetails aficionado = User.builder().username("aficionado").password(encoder.encode("aficionado123"))
-				.roles("FAN").build();
+    @Bean
+    public UserDetailsService userDetailsService(PasswordEncoder encoder) {
+        UserDetails aficionado = User.builder()
+                .username("aficionado")
+                .password(encoder.encode("aficionado123"))
+                .roles("FAN").build();
+        UserDetails funcionario = User.builder()
+                .username("fifa")
+                .password(encoder.encode("fifa2026"))
+                .roles("FIFA").build();
+        return new InMemoryUserDetailsManager(aficionado, funcionario);
+    }
 
-		UserDetails funcionario = User.builder().username("fifa").password(encoder.encode("fifa2026")).roles("FIFA")
-				.build();
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 
-		return new InMemoryUserDetailsManager(aficionado, funcionario);
-	}
-
-	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		http.csrf(csrf -> csrf.disable())
-				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(auth -> auth.requestMatchers("/h2-console/**").permitAll()
-						.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-						.requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()
-						.requestMatchers(HttpMethod.GET, "/fifa-world-cup/api/v1/**").permitAll()
-						.requestMatchers(HttpMethod.POST, "/api/v1/**").hasRole("FIFA")
-						.requestMatchers(HttpMethod.POST, "/fifa-world-cup/api/v1/**").hasRole("FIFA")
-						.requestMatchers(HttpMethod.PUT, "/api/v1/**").hasRole("FIFA")
-						.requestMatchers(HttpMethod.PUT, "/fifa-world-cup/api/v1/**").hasRole("FIFA")
-						.requestMatchers(HttpMethod.DELETE, "/api/v1/**").hasRole("FIFA")
-						.requestMatchers(HttpMethod.DELETE, "/fifa-world-cup/api/v1/**").hasRole("FIFA").anyRequest()
-						.authenticated())
-				.httpBasic(basic -> {
-				}).headers(headers -> headers.frameOptions(frame -> frame.disable()));
-
-		return http.build();
-	}
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/fifa-world-cup/api/v1/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/**").hasRole("FIFA")
+                .requestMatchers(HttpMethod.POST, "/fifa-world-cup/api/v1/**").hasRole("FIFA")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/**").hasRole("FIFA")
+                .requestMatchers(HttpMethod.PUT, "/fifa-world-cup/api/v1/**").hasRole("FIFA")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/**").hasRole("FIFA")
+                .requestMatchers(HttpMethod.DELETE, "/fifa-world-cup/api/v1/**").hasRole("FIFA")
+                .anyRequest().authenticated())
+            .httpBasic(basic -> {})
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()));
+        return http.build();
+    }
 }

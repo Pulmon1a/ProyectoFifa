@@ -1,4 +1,4 @@
-package co.edu.unbosque.controller;
+package co.edu.unbosque.controller.implement;
 
 import co.edu.unbosque.model.dto.KnockoutMatchDTO;
 import org.springframework.http.ResponseEntity;

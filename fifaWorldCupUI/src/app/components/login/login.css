@@ -1,0 +1,57 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+}
+
+.login-card {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid #c9a227;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.login-header .trophy {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.login-header h2 {
+  color: #c9a227;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.login-header p {
+  color: #666;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.login-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-body .btn-primary {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 8px;
+}

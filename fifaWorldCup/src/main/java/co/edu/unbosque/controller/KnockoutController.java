@@ -1,5 +1,6 @@
 package co.edu.unbosque.controller;
 
+import co.edu.unbosque.controller.implement.IKnockoutController;
 import co.edu.unbosque.exception.BadRequestException;
 import co.edu.unbosque.exception.ResourceNotFoundException;
 import co.edu.unbosque.model.KnockoutMatch;
@@ -20,217 +21,221 @@ import java.util.*;
 @RequestMapping("/api/v1/knockout")
 public class KnockoutController implements IKnockoutController {
 
-	@Autowired
-	private KnockoutMatchRepository knockoutMatchRepository;
+    @Autowired
+    private KnockoutMatchRepository knockoutMatchRepository;
 
-	@Autowired
-	private TeamRepository teamRepository;
+    @Autowired
+    private TeamRepository teamRepository;
 
-	@Autowired
-	private MatchRepository matchRepository;
+    @Autowired
+    private MatchRepository matchRepository;
 
-	private KnockoutMatchDTO mapToDto(KnockoutMatch m) {
-		return new KnockoutMatchDTO(m.getId(), m.getRound(), m.getHomeTeamId(), m.getAwayTeamId(), m.getHomeGoals(),
-				m.getAwayGoals(), m.getWinnerId(), m.isPlayed());
-	}
+    private KnockoutMatchDTO mapToDto(KnockoutMatch m) {
+        return new KnockoutMatchDTO(m.getId(), m.getRound(), m.getHomeTeamId(), m.getAwayTeamId(), m.getHomeGoals(),
+                m.getAwayGoals(), m.getWinnerId(), m.isPlayed());
+    }
 
-	private List<StandingDTO> calculateStandings(String groupId) {
-		List<Team> teams = teamRepository.findByGroupId(groupId);
-		List<Match> matches = matchRepository.findByGroupId(groupId);
+    private List<StandingDTO> calculateStandings(String groupId) {
+        List<Team> teams = teamRepository.findByGroupId(groupId);
+        List<Match> matches = matchRepository.findByGroupId(groupId);
 
-		Map<String, StandingDTO> map = new HashMap<>();
-		for (Team t : teams)
-			map.put(t.getId(), new StandingDTO(t.getId(), t.getName()));
+        Map<String, StandingDTO> map = new HashMap<>();
+        for (Team t : teams)
+            map.put(t.getId(), new StandingDTO(t.getId(), t.getName()));
 
-		for (Match m : matches) {
-			if (!m.isPlayed())
-				continue;
-			StandingDTO home = map.get(m.getHomeTeamId());
-			StandingDTO away = map.get(m.getAwayTeamId());
-			if (home != null)
-				home.addMatch(m.getHomeGoals(), m.getAwayGoals(), m.getHomeYellowCards(), m.getHomeRedCards());
-			if (away != null)
-				away.addMatch(m.getAwayGoals(), m.getHomeGoals(), m.getAwayYellowCards(), m.getAwayRedCards());
-		}
+        for (Match m : matches) {
+            if (!m.isPlayed()) continue;
+            StandingDTO home = map.get(m.getHomeTeamId());
+            StandingDTO away = map.get(m.getAwayTeamId());
+            if (home != null)
+                home.addMatch(m.getHomeGoals(), m.getAwayGoals(), m.getHomeYellowCards(), m.getHomeRedCards());
+            if (away != null)
+                away.addMatch(m.getAwayGoals(), m.getHomeGoals(), m.getAwayYellowCards(), m.getAwayRedCards());
+        }
 
-		List<StandingDTO> standings = new ArrayList<>(map.values());
-		standings.sort(Comparator.comparingInt(StandingDTO::getPoints).reversed()
-				.thenComparingInt(StandingDTO::getGoalDifference).reversed().thenComparingInt(StandingDTO::getGoalsFor)
-				.reversed().thenComparingInt(StandingDTO::getYellowCards).thenComparingInt(StandingDTO::getRedCards));
-		return standings;
-	}
+        List<StandingDTO> standings = new ArrayList<>(map.values());
+        standings.sort(Comparator.comparingInt(StandingDTO::getPoints).reversed()
+                .thenComparingInt(StandingDTO::getGoalDifference).reversed()
+                .thenComparingInt(StandingDTO::getGoalsFor).reversed()
+                .thenComparingInt(StandingDTO::getYellowCards)
+                .thenComparingInt(StandingDTO::getRedCards));
+        return standings;
+    }
 
-	private void validateAllMatchesPlayed() {
-		String[] groups = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L" };
+    private void validateAllMatchesPlayed() {
+        String[] groups = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L" };
+        for (String groupId : groups) {
+            List<Match> matches = matchRepository.findByGroupId(groupId);
+            if (matches.size() < 6)
+                throw new BadRequestException("El grupo " + groupId + " no tiene los 6 partidos registrados. Tiene " + matches.size() + " partido(s)");
+            long unplayed = matches.stream().filter(m -> !m.isPlayed()).count();
+            if (unplayed > 0)
+                throw new BadRequestException("El grupo " + groupId + " tiene " + unplayed + " partido(s) sin jugar.");
+        }
+    }
 
-		for (String groupId : groups) {
-			List<Match> matches = matchRepository.findByGroupId(groupId);
+    private void advanceBracket(String currentRound, String nextRound) {
+        List<KnockoutMatch> currentMatches = knockoutMatchRepository.findByRound(currentRound);
+        boolean allPlayed = currentMatches.stream().allMatch(KnockoutMatch::isPlayed);
+        if (!allPlayed) return;
 
-			if (matches.size() < 6) {
-				throw new BadRequestException("El grupo " + groupId + " no tiene los 6 partidos registrados. "
-						+ "Tiene " + matches.size() + " partido(s)");
-			}
+        List<KnockoutMatch> nextMatches = knockoutMatchRepository.findByRound(nextRound);
+        if (!nextMatches.isEmpty()) return;
 
-			long unplayed = matches.stream().filter(m -> !m.isPlayed()).count();
-			if (unplayed > 0) {
-				throw new BadRequestException("El grupo " + groupId + " tiene " + unplayed
-						+ " partido(s) sin jugar. Deben completarse todos " + "antes de cerrar la fase de grupos");
-			}
-		}
-	}
+        List<KnockoutMatch> sorted = currentMatches.stream()
+                .sorted(Comparator.comparing(KnockoutMatch::getId)).toList();
 
-	private void advanceBracket(String currentRound, String nextRound, int matchCount) {
-		List<KnockoutMatch> currentMatches = knockoutMatchRepository.findByRound(currentRound);
+        List<String> winners = sorted.stream().map(KnockoutMatch::getWinnerId).toList();
+        List<KnockoutMatch> newMatches = new ArrayList<>();
+        String prefix = nextRound.replace(" ", "").substring(0, 3).toUpperCase();
 
-		boolean allPlayed = currentMatches.stream().allMatch(KnockoutMatch::isPlayed);
-		if (!allPlayed)
-			return;
+        for (int i = 0; i < winners.size() / 2; i++) {
+            String matchId = prefix + "-" + (i + 1);
+            newMatches.add(new KnockoutMatch(matchId, nextRound, winners.get(i), winners.get(winners.size() - 1 - i)));
+        }
+        knockoutMatchRepository.saveAll(newMatches);
+    }
 
-		List<KnockoutMatch> nextMatches = knockoutMatchRepository.findByRound(nextRound);
-		if (!nextMatches.isEmpty())
-			return;
+    private void generateThirdPlace(String currentRound) {
+        List<KnockoutMatch> semiMatches = knockoutMatchRepository.findByRound(currentRound);
+        
+        if (semiMatches.isEmpty()) return;
+        
+        boolean allPlayed = semiMatches.stream().allMatch(KnockoutMatch::isPlayed);
+        if (!allPlayed) return;
 
-		List<String> winners = currentMatches.stream().sorted(Comparator.comparing(KnockoutMatch::getId))
-				.map(KnockoutMatch::getWinnerId).toList();
+        List<KnockoutMatch> existing = knockoutMatchRepository.findByRound("Third Place");
+        if (!existing.isEmpty()) return;
 
-		List<KnockoutMatch> newMatches = new ArrayList<>();
-		String prefix = nextRound.replace(" ", "").substring(0, 3).toUpperCase();
+        List<KnockoutMatch> sorted = semiMatches.stream()
+                .sorted(Comparator.comparing(KnockoutMatch::getId)).toList();
 
-		for (int i = 0; i < winners.size() / 2; i++) {
-			String matchId = prefix + "-" + (i + 1);
-			newMatches.add(new KnockoutMatch(matchId, nextRound, winners.get(i), winners.get(winners.size() - 1 - i)));
-		}
+        if (sorted.size() < 2) return;
 
-		knockoutMatchRepository.saveAll(newMatches);
-	}
+        List<String> losers = new ArrayList<>();
+        for (KnockoutMatch m : sorted) {
+            String loser = m.getWinnerId().equals(m.getHomeTeamId()) ? m.getAwayTeamId() : m.getHomeTeamId();
+            losers.add(loser);
+        }
 
-	private String getGroupWinner(String groupId) {
-		List<StandingDTO> standings = calculateStandings(groupId);
-		return standings.isEmpty() ? null : standings.get(0).getTeamId();
-	}
+        KnockoutMatch thirdPlace = new KnockoutMatch("THP-1", "Third Place", losers.get(0), losers.get(1));
+        knockoutMatchRepository.save(thirdPlace);
+    }
 
-	private String getGroupRunnerUp(String groupId) {
-		List<StandingDTO> standings = calculateStandings(groupId);
-		return standings.size() < 2 ? null : standings.get(1).getTeamId();
-	}
+    private String getGroupWinner(String groupId) {
+        List<StandingDTO> standings = calculateStandings(groupId);
+        return standings.isEmpty() ? null : standings.get(0).getTeamId();
+    }
 
-	private List<String> getBestThirds() {
-		String[] groupIds = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L" };
-		List<StandingDTO> allThirds = new ArrayList<>();
+    private String getGroupRunnerUp(String groupId) {
+        List<StandingDTO> standings = calculateStandings(groupId);
+        return standings.size() < 2 ? null : standings.get(1).getTeamId();
+    }
 
-		for (String groupId : groupIds) {
-			List<StandingDTO> standings = calculateStandings(groupId);
-			if (standings.size() >= 3) {
-				StandingDTO third = standings.get(2);
-				third.setTeamId(third.getTeamId());
-				allThirds.add(third);
-			}
-		}
+    private List<String> getBestThirds() {
+        String[] groupIds = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L" };
+        List<StandingDTO> allThirds = new ArrayList<>();
+        for (String groupId : groupIds) {
+            List<StandingDTO> standings = calculateStandings(groupId);
+            if (standings.size() >= 3)
+                allThirds.add(standings.get(2));
+        }
+        allThirds.sort(Comparator.comparingInt(StandingDTO::getPoints).reversed()
+                .thenComparingInt(StandingDTO::getGoalDifference).reversed()
+                .thenComparingInt(StandingDTO::getGoalsFor).reversed()
+                .thenComparingInt(StandingDTO::getYellowCards)
+                .thenComparingInt(StandingDTO::getRedCards));
+        List<String> best8 = new ArrayList<>();
+        for (int i = 0; i < Math.min(8, allThirds.size()); i++)
+            best8.add(allThirds.get(i).getTeamId());
+        return best8;
+    }
 
-		allThirds.sort(Comparator.comparingInt(StandingDTO::getPoints).reversed()
-				.thenComparingInt(StandingDTO::getGoalDifference).reversed().thenComparingInt(StandingDTO::getGoalsFor)
-				.reversed().thenComparingInt(StandingDTO::getYellowCards).thenComparingInt(StandingDTO::getRedCards));
+    @Override
+    @PostMapping("/close-group-stage")
+    public ResponseEntity<?> closeGroupStage() {
+        if (!knockoutMatchRepository.findAll().isEmpty())
+            throw new BadRequestException("La fase de eliminación ya fue generada");
 
-		List<String> best8 = new ArrayList<>();
-		for (int i = 0; i < Math.min(8, allThirds.size()); i++) {
-			best8.add(allThirds.get(i).getTeamId());
-		}
-		return best8;
-	}
+        validateAllMatchesPlayed();
 
-	@Override
-	@PostMapping("/close-group-stage")
-	public ResponseEntity<?> closeGroupStage() {
-		if (!knockoutMatchRepository.findAll().isEmpty()) {
-			throw new BadRequestException("La fase de eliminación ya fue generada");
-		}
+        String[] groups = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L" };
+        List<String> winners = new ArrayList<>();
+        List<String> runnersUp = new ArrayList<>();
 
-		validateAllMatchesPlayed();
+        for (String g : groups) {
+            String winner = getGroupWinner(g);
+            String runnerUp = getGroupRunnerUp(g);
+            if (winner != null) winners.add(winner);
+            if (runnerUp != null) runnersUp.add(runnerUp);
+        }
 
-		String[] groups = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L" };
-		List<String> winners = new ArrayList<>();
-		List<String> runnersUp = new ArrayList<>();
+        List<String> bestThirds = getBestThirds();
+        List<String> qualified = new ArrayList<>();
+        qualified.addAll(winners);
+        qualified.addAll(runnersUp);
+        qualified.addAll(bestThirds);
 
-		for (String g : groups) {
-			String winner = getGroupWinner(g);
-			String runnerUp = getGroupRunnerUp(g);
-			if (winner != null)
-				winners.add(winner);
-			if (runnerUp != null)
-				runnersUp.add(runnerUp);
-		}
+        if (qualified.size() < 32)
+            throw new BadRequestException("No hay suficientes equipos clasificados. Se necesitan 32, hay " + qualified.size());
 
-		List<String> bestThirds = getBestThirds();
-		List<String> qualified = new ArrayList<>();
-		qualified.addAll(winners);
-		qualified.addAll(runnersUp);
-		qualified.addAll(bestThirds);
+        List<KnockoutMatch> matches = new ArrayList<>();
+        for (int i = 0; i < 16; i++) {
+            String matchId = "R32-" + (i + 1);
+            matches.add(new KnockoutMatch(matchId, "Round of 32", qualified.get(i), qualified.get(31 - i)));
+        }
+        knockoutMatchRepository.saveAll(matches);
+        return ResponseEntity.ok("Fase de eliminación directa generada con " + matches.size() + " partidos");
+    }
 
-		if (qualified.size() < 32) {
-			throw new BadRequestException(
-					"No hay suficientes equipos clasificados. Se necesitan 32, hay " + qualified.size());
-		}
+    @Override
+    @GetMapping("/bracket")
+    public ResponseEntity<?> getBracket() {
+        List<KnockoutMatch> all = knockoutMatchRepository.findAll();
+        if (all.isEmpty())
+            throw new BadRequestException("La fase de grupos aún no ha sido cerrada");
 
-		List<KnockoutMatch> matches = new ArrayList<>();
-		for (int i = 0; i < 16; i++) {
-			String matchId = "R32-" + (i + 1);
-			matches.add(new KnockoutMatch(matchId, "Round of 32", qualified.get(i), qualified.get(31 - i)));
-		}
+        Map<String, List<KnockoutMatchDTO>> bracket = new LinkedHashMap<>();
+        bracket.put("Round of 32", knockoutMatchRepository.findByRound("Round of 32").stream().map(this::mapToDto).toList());
+        bracket.put("Round of 16", knockoutMatchRepository.findByRound("Round of 16").stream().map(this::mapToDto).toList());
+        bracket.put("Quarter Finals", knockoutMatchRepository.findByRound("Quarter Finals").stream().map(this::mapToDto).toList());
+        bracket.put("Semi Finals", knockoutMatchRepository.findByRound("Semi Finals").stream().map(this::mapToDto).toList());
+        bracket.put("Third Place", knockoutMatchRepository.findByRound("Third Place").stream().map(this::mapToDto).toList());
+        bracket.put("Final", knockoutMatchRepository.findByRound("Final").stream().map(this::mapToDto).toList());
 
-		knockoutMatchRepository.saveAll(matches);
-		return ResponseEntity.ok("Fase de eliminación directa generada con " + matches.size() + " partidos");
-	}
+        return ResponseEntity.ok(bracket);
+    }
 
-	@Override
-	@GetMapping("/bracket")
-	public ResponseEntity<?> getBracket() {
-		List<KnockoutMatch> all = knockoutMatchRepository.findAll();
-		if (all.isEmpty())
-			throw new BadRequestException("La fase de grupos aún no ha sido cerrada");
+    @Override
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateKnockoutMatch(@PathVariable String id, @RequestBody KnockoutMatchDTO dto) {
+        KnockoutMatch match = knockoutMatchRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Partido con id " + id + " no encontrado"));
 
-		Map<String, List<KnockoutMatchDTO>> bracket = new LinkedHashMap<>();
-		bracket.put("Round of 32",
-				knockoutMatchRepository.findByRound("Round of 32").stream().map(this::mapToDto).toList());
-		bracket.put("Round of 16",
-				knockoutMatchRepository.findByRound("Round of 16").stream().map(this::mapToDto).toList());
-		bracket.put("Quarter Finals",
-				knockoutMatchRepository.findByRound("Quarter Finals").stream().map(this::mapToDto).toList());
-		bracket.put("Semi Finals",
-				knockoutMatchRepository.findByRound("Semi Finals").stream().map(this::mapToDto).toList());
-		bracket.put("Final", knockoutMatchRepository.findByRound("Final").stream().map(this::mapToDto).toList());
+        match.setHomeGoals(dto.getHomeGoals());
+        match.setAwayGoals(dto.getAwayGoals());
+        match.setPlayed(dto.isPlayed());
 
-		return ResponseEntity.ok(bracket);
-	}
+        if (dto.isPlayed()) {
+            if (dto.getHomeGoals() > dto.getAwayGoals()) {
+                match.setWinnerId(match.getHomeTeamId());
+            } else if (dto.getAwayGoals() > dto.getHomeGoals()) {
+                match.setWinnerId(match.getAwayTeamId());
+            } else {
+                throw new BadRequestException("En eliminación directa no puede haber empate, define un ganador");
+            }
+        }
 
-	@Override
-	@PutMapping("/{id}")
-	public ResponseEntity<?> updateKnockoutMatch(@PathVariable String id, @RequestBody KnockoutMatchDTO dto) {
-		KnockoutMatch match = knockoutMatchRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Partido con id " + id + " no encontrado"));
+        knockoutMatchRepository.save(match);
 
-		match.setHomeGoals(dto.getHomeGoals());
-		match.setAwayGoals(dto.getAwayGoals());
-		match.setPlayed(dto.isPlayed());
+        if (dto.isPlayed()) {
+            advanceBracket("Round of 32", "Round of 16");
+            advanceBracket("Round of 16", "Quarter Finals");
+            advanceBracket("Quarter Finals", "Semi Finals");
+            generateThirdPlace("Semi Finals");
+            advanceBracket("Semi Finals", "Final");
+        }
 
-		if (dto.isPlayed()) {
-			if (dto.getHomeGoals() > dto.getAwayGoals()) {
-				match.setWinnerId(match.getHomeTeamId());
-			} else if (dto.getAwayGoals() > dto.getHomeGoals()) {
-				match.setWinnerId(match.getAwayTeamId());
-			} else {
-				throw new BadRequestException("En eliminación directa no puede haber empate, define un ganador");
-			}
-		}
-
-		knockoutMatchRepository.save(match);
-
-		if (dto.isPlayed()) {
-			advanceBracket("Round of 32", "Round of 16", 8);
-			advanceBracket("Round of 16", "Quarter Finals", 4);
-			advanceBracket("Quarter Finals", "Semi Finals", 2);
-			advanceBracket("Semi Finals", "Final", 1);
-		}
-
-		return ResponseEntity.ok(mapToDto(match));
-	}
+        return ResponseEntity.ok(mapToDto(match));
+    }
 }

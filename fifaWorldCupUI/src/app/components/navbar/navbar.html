@@ -1,0 +1,18 @@
+<nav class="navbar">
+  <div class="navbar-brand">
+    <span>FIFA World Cup 2026</span>
+  </div>
+  <div class="navbar-links">
+    <a routerLink="/groups" routerLinkActive="active">Grupos</a>
+    <a routerLink="/matches" routerLinkActive="active">Partidos</a>
+    <a routerLink="/knockout" routerLinkActive="active">Eliminatoria</a>
+    <a routerLink="/teams" routerLinkActive="active" *ngIf="apiService.isAdmin()">Equipos</a>
+    <a routerLink="/login" class="btn-login" *ngIf="!apiService.isAdmin()">Acceso FIFA</a>
+    <button class="btn-logout" *ngIf="apiService.isAdmin()" (click)="logout()">
+      {{ apiService.getUsername() }} | Salir
+    </button>
+    <button class="btn-logout" *ngIf="!apiService.isAdmin()" (click)="logout()" style="background:#555">
+      Salir
+    </button>
+  </div>
+</nav>

@@ -1,0 +1,134 @@
+.bracket-container {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 20px;
+}
+
+.round-column {
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.round-title {
+  color: #c9a227;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #c9a227;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bracket-match {
+  background: #16213e;
+  border: 1px solid #1e2a4a;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.bracket-match.played { border-color: #27ae60; }
+
+.bracket-team {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  border-bottom: 1px solid #1a2035;
+  color: #ccc;
+}
+
+.bracket-team:last-child { border-bottom: none; }
+
+.bracket-team.winner {
+  background: rgba(201,162,39,0.12);
+  color: #c9a227;
+  font-weight: 700;
+}
+
+.bracket-score {
+  font-weight: 700;
+  color: #c9a227;
+  font-size: 0.9rem;
+}
+
+.bracket-pending {
+  color: #333;
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 16px;
+  border: 1px dashed #222;
+  border-radius: 6px;
+}
+
+.match-actions { padding: 8px 12px; }
+
+/* ── PODIO ── */
+.podio-container {
+  text-align: center;
+  padding: 48px 20px;
+  background: linear-gradient(135deg, #0d0d1a, #16213e);
+  border-radius: 12px;
+  border: 1px solid #c9a227;
+  margin-bottom: 32px;
+}
+
+.podio-title {
+  font-size: 1.6rem;
+  color: #c9a227;
+  margin-bottom: 48px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.podio {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+}
+
+.podio-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.podio-medal { font-size: 2rem; }
+
+.podio-team {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.podio-label {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.podio-block {
+  width: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  border-radius: 6px 6px 0 0;
+  color: #fff;
+}
+
+.podio-place.first .podio-block { background: linear-gradient(180deg, #c9a227, #8a6f1a); }
+.podio-place.second .podio-block { background: linear-gradient(180deg, #8a8a8a, #555); }
+.podio-place.third .podio-block { background: linear-gradient(180deg, #cd7f32, #7a4010); }

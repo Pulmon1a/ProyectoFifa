@@ -1,4 +1,4 @@
-package co.edu.unbosque.controller;
+package co.edu.unbosque.controller.implement;
 
 import co.edu.unbosque.model.dto.TeamDTO;
 import org.springframework.http.ResponseEntity;

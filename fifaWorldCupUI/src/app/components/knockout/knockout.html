@@ -1,0 +1,90 @@
+<div class="page-container">
+  <h1 class="page-title">Fase Eliminatoria</h1>
+
+  <div *ngIf="success" class="success-msg">{{ success }}</div>
+  <div *ngIf="error && !loading" class="error-msg">{{ error }}</div>
+
+  <div *ngIf="tournamentFinished" class="podio-container">
+    <h2 class="podio-title">Torneo Finalizado</h2>
+    <div class="podio">
+      <div class="podio-place second">
+        <div class="podio-team">{{ getTeamName(runnerUp) }}</div>
+        <div class="podio-label">2° Lugar</div>
+        <div class="podio-block" style="height: 80px;">2</div>
+      </div>
+      <div class="podio-place first">
+        <div class="podio-team">{{ getTeamName(champion) }}</div>
+        <div class="podio-label">Campeon</div>
+        <div class="podio-block" style="height: 120px;">1</div>
+      </div>
+      <div class="podio-place third">
+        <div class="podio-team">{{ getTeamName(thirdPlace) }}</div>
+        <div class="podio-label">3° Lugar</div>
+        <div class="podio-block" style="height: 60px;">3</div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="apiService.isAdmin() && !bracketStarted" style="margin-bottom: 20px;">
+    <button class="btn-primary" (click)="closeGroupStage()" [disabled]="closing">
+      {{ closing ? 'Generando bracket...' : 'Cerrar Fase de Grupos y Generar Eliminatoria' }}
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading">Cargando bracket...</div>
+
+  <div *ngIf="!loading && !bracketStarted" class="empty-state">
+    <p>La fase eliminatoria aun no ha comenzado.</p>
+    <p *ngIf="!apiService.isAdmin()">La fase eliminatoria se habilita cuando se cierran todos los grupos.</p>
+  </div>
+
+  <div *ngIf="!loading && bracketStarted" class="bracket-container">
+    <div *ngFor="let round of rounds" class="round-column">
+      <h2 class="round-title">{{ round }}</h2>
+      <div *ngIf="bracket[round] && bracket[round].length > 0; else emptyRound">
+        <div *ngFor="let match of bracket[round]" class="bracket-match" [class.played]="match.played">
+          <div class="bracket-team" [class.winner]="match.winnerId === match.homeTeamId">
+            {{ getTeamName(match.homeTeamId) }}
+            <span *ngIf="match.played" class="bracket-score">{{ match.homeGoals }}</span>
+          </div>
+          <div class="bracket-team" [class.winner]="match.winnerId === match.awayTeamId">
+            {{ getTeamName(match.awayTeamId) }}
+            <span *ngIf="match.played" class="bracket-score">{{ match.awayGoals }}</span>
+          </div>
+          <div class="match-actions" *ngIf="apiService.isAdmin() && !match.played">
+            <button class="btn-edit" (click)="openEditMatch(match)">Registrar Resultado</button>
+          </div>
+        </div>
+      </div>
+      <ng-template #emptyRound>
+        <div class="bracket-pending">Por definir</div>
+      </ng-template>
+    </div>
+  </div>
+
+  <div *ngIf="editingMatch" class="form-card" style="margin-top:20px">
+    <h3>{{ getTeamName(editingMatch.homeTeamId) }} vs {{ getTeamName(editingMatch.awayTeamId) }}</h3>
+    <p style="color:#aaa; font-size:0.85rem;">No puede haber empate en eliminatoria.</p>
+    <div class="result-form">
+      <div class="result-team">
+        <label>{{ getTeamName(editingMatch.homeTeamId) }}</label>
+        <div class="form-group">
+          <label>Goles</label>
+          <input type="number" [(ngModel)]="knockoutForm.homeGoals" min="0" />
+        </div>
+      </div>
+      <div class="vs-divider">VS</div>
+      <div class="result-team">
+        <label>{{ getTeamName(editingMatch.awayTeamId) }}</label>
+        <div class="form-group">
+          <label>Goles</label>
+          <input type="number" [(ngModel)]="knockoutForm.awayGoals" min="0" />
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" (click)="saveKnockoutResult()">Guardar</button>
+      <button class="btn-secondary" (click)="cancelEdit()">Cancelar</button>
+    </div>
+  </div>
+</div>

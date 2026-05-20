@@ -1,10 +1,12 @@
 package co.edu.unbosque.controller;
 
+import co.edu.unbosque.controller.implement.ITeamController;
 import co.edu.unbosque.exception.BadRequestException;
 import co.edu.unbosque.exception.ResourceNotFoundException;
 import co.edu.unbosque.model.Team;
 import co.edu.unbosque.model.dto.TeamDTO;
 import co.edu.unbosque.persistence.GroupRepository;
+import co.edu.unbosque.persistence.MatchRepository;
 import co.edu.unbosque.persistence.TeamRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,9 @@ public class TeamController implements ITeamController {
 
 	@Autowired
 	private GroupRepository groupRepository;
+
+	@Autowired
+	private MatchRepository matchRepository;
 
 	private void validate(TeamDTO dto) {
 		if (dto == null || dto.getId() == null || dto.getId().isBlank() || dto.getName() == null
@@ -75,9 +80,11 @@ public class TeamController implements ITeamController {
 	@Override
 	@PostMapping
 	public ResponseEntity<?> addTeam(@RequestBody TeamDTO dto) {
-		validate(dto);
-		Team saved = teamRepository.save(mapToEntity(dto));
-		return ResponseEntity.status(201).body(mapToDto(saved));
+	    validate(dto);
+	    if (teamRepository.existsById(dto.getId()))
+	        throw new BadRequestException("Ya existe un equipo con el id " + dto.getId());
+	    Team saved = teamRepository.save(mapToEntity(dto));
+	    return ResponseEntity.status(201).body(mapToDto(saved));
 	}
 
 	@Override
@@ -85,6 +92,30 @@ public class TeamController implements ITeamController {
 	public ResponseEntity<?> updateTeam(@PathVariable String id, @RequestBody TeamDTO dto) {
 		if (!teamRepository.existsById(id))
 			throw new ResourceNotFoundException("Equipo con id " + id + " no encontrado");
+
+		if (!groupRepository.existsById(dto.getGroupId()))
+			throw new BadRequestException("El grupo " + dto.getGroupId() + " no existe");
+
+		List<Team> teamsInGroup = teamRepository.findByGroupId(dto.getGroupId()).stream()
+				.filter(t -> !t.getId().equals(id)).toList();
+
+		if (teamsInGroup.size() >= MAX_TEAMS_PER_GROUP)
+			throw new BadRequestException(
+					"El grupo " + dto.getGroupId() + " ya tiene el máximo de " + MAX_TEAMS_PER_GROUP + " equipos");
+
+		long sameConfederation = teamsInGroup.stream()
+				.filter(t -> t.getConfederation().equalsIgnoreCase(dto.getConfederation())).count();
+
+		if (dto.getConfederation().equalsIgnoreCase("UEFA")) {
+			if (sameConfederation >= MAX_UEFA_PER_GROUP)
+				throw new BadRequestException("El grupo " + dto.getGroupId() + " ya tiene el máximo de "
+						+ MAX_UEFA_PER_GROUP + " equipos UEFA");
+		} else {
+			if (sameConfederation >= 1)
+				throw new BadRequestException("El grupo " + dto.getGroupId()
+						+ " ya tiene un equipo de la confederación " + dto.getConfederation());
+		}
+
 		dto.setId(id);
 		Team updated = teamRepository.save(mapToEntity(dto));
 		return ResponseEntity.ok(mapToDto(updated));
@@ -95,6 +126,11 @@ public class TeamController implements ITeamController {
 	public ResponseEntity<?> deleteTeam(@PathVariable String id) {
 		if (!teamRepository.existsById(id))
 			throw new ResourceNotFoundException("Equipo con id " + id + " no encontrado");
+
+		boolean tienePartidos = !matchRepository.findByHomeTeamIdOrAwayTeamId(id, id).isEmpty();
+		if (tienePartidos)
+			throw new BadRequestException("No se puede eliminar el equipo porque ya tiene partidos registrados");
+
 		teamRepository.deleteById(id);
 		return ResponseEntity.noContent().build();
 	}
